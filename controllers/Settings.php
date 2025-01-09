@@ -14,6 +14,7 @@ class HSD_Settings extends HSD_Controller {
 	const OAUTHTOKEN = 'hs_oauthtoken';
 	const APP_ID = 'hs_oauthtoken_app_id';
 	const SECRET = 'hs_oauthtoken_secret';
+	const HSD_NONCE = 'hsd_nonce';
 	protected static $api_key;
 	protected static $mailbox;
 	protected static $oauth_token;
@@ -162,18 +163,18 @@ class HSD_Settings extends HSD_Controller {
 	public static function reset_customer_ids() {
 		ob_start();
 		?>
-			<span class="button" id="reset_customer_ids"><?php _e( 'Reset Customer IDS', 'help-scout-desk' ) ?></span>
+			<span class="button" id="reset_customer_ids" data-nonce="<?php wp_create_nonce( HSD_NONCE ) ?>"><?php _e( 'Reset Customer IDS', 'help-scout-desk' ) ?></span>
 			<script type="text/javascript">
 				//<![CDATA[
 				jQuery("#reset_customer_ids").on('click', function(event) {
 					event.stopPropagation();
 					event.preventDefault();
 					var $button = jQuery( this );
-					
+
 					$button.after('<span class="spinner si_inline_spinner" style="visibility:visible;display:inline-block;"></span>');
 
 					if( confirm( '<?php _e( 'Are you sure? This will delete stored customer ids for your users.', 'help-scout-desk' ) ?>' ) ) {
-						jQuery.post( ajaxurl, { action: 'hsd_reset_customer_ids' },
+						jQuery.post( ajaxurl, { action: 'hsd_reset_customer_ids', nonce: $button.data('nonce') },
 							function( data ) {
 								jQuery('.si_inline_spinner').remove();
 								jQuery("#reset_customer_ids").removeClass('button');

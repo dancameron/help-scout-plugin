@@ -476,7 +476,7 @@ class HelpScout_API extends HSD_Controller {
 	}
 
 	public static function maybe_reset_customer_ids() {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( 'manage_options' ) && wp_verify_nonce( $_GET['nonce'], HSD_Settings::HSD_NONCE ) ) {
 			return;
 		}
 
