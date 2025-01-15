@@ -93,34 +93,38 @@ class HSD_Settings extends HSD_Controller {
 				'callback' => array( __CLASS__, 'display_general_section' ),
 				'settings' => array(
 					self::APP_ID => array(
-						'label' => __( 'Application ID', 'help-scout-desk' ),
+						'label' => __( 'Application ID', 'help-scout' ),
 						'option' => array(
-							'description' => sprintf( __( 'You need to create an OAuth2 application before you can proceed. Create one by navigating to Your Profile > My apps and click Create My App. When creating your app use <code>%s</code> as the redirect url.', 'help-scout-desk' ), HelpScout_API::get_redirect_url() ),
+							'description' => sprintf(
+								// translators: 1: the redirect url.
+								__( 'You need to create an OAuth2 application before you can proceed. Create one by navigating to Your Profile > My apps and click Create My App. When creating your app use <code>%1$s</code> as the redirect url.', 'help-scout' ),
+								HelpScout_API::get_redirect_url(),
+							),
 							'type' => 'text',
 							'default' => self::$app_id,
 						),
 					),
 					self::SECRET => array(
-						'label' => __( 'App Secret', 'help-scout-desk' ),
+						'label' => __( 'App Secret', 'help-scout' ),
 						'option' => array(
-							'description' => sprintf( __( 'The app secret when creating a new OAuth2 application.', 'help-scout-desk' ), HelpScout_API::get_redirect_url() ),
+							'description' => sprintf( __( 'The app secret when creating a new OAuth2 application.', 'help-scout' ), HelpScout_API::get_redirect_url() ),
 							'type' => 'text',
 							'default' => self::$secret,
 						),
 					),
 					self::MAILBOX => array(
-						'label' => __( 'Mailbox ID', 'help-scout-desk' ),
+						'label' => __( 'Mailbox ID', 'help-scout' ),
 						'option' => array(
-							'description' => __( 'When opening a mailbox within Help Scout, open the mailbox and click Settings in the bottom left corner of the mailbox filters list and click in Edit Mailbox. In the URL of the resulting settings screen, is your mailbox ID. Example, https://secure.helpscout.net/settings/mailbox/<b>123456</b>/', 'help-scout-desk' ),
+							'description' => __( 'When opening a mailbox within Help Scout, open the mailbox and click Settings in the bottom left corner of the mailbox filters list and click in Edit Mailbox. In the URL of the resulting settings screen, is your mailbox ID. Example, https://secure.helpscout.net/settings/mailbox/<b>123456</b>/', 'help-scout' ),
 							'type' => 'text',
 							'default' => self::sanitize_mailbox_id( self::$mailbox ),
 						),
 						'sanitize_callback' => array( __CLASS__, 'sanitize_mailbox_id' ),
 					),
 					self::RESET_CUSTOMER_IDS_QV => array(
-						'label' => __( 'Advanced: Reset', 'help-scout-desk' ),
+						'label' => __( 'Advanced: Reset', 'help-scout' ),
 						'option' => array(
-							'description' => __( 'To be used if you\'ve recently migrated and have the API error "input could not be validate". Note: confirm the mailbox, APP ID, and Secret before using this option.', 'help-scout-desk' ),
+							'description' => __( 'To be used if you\'ve recently migrated and have the API error "input could not be validate". Note: confirm the mailbox, APP ID, and Secret before using this option.', 'help-scout' ),
 							'type' => 'bypass',
 							'output' => self::reset_customer_ids(),
 						),
@@ -143,19 +147,27 @@ class HSD_Settings extends HSD_Controller {
 	//////////////////////
 
 	public static function display_general_section() {
-		printf( __( '<p>Enter Help Scout API Information below. For details on how to find this information and setting your pages/shortcodes please review the <a href="%s">documention</a>.</p>', 'help-scout-desk' ), SUPPORT_URL );
+		printf(
+			// Translators: 1: opening paragraph tag 2: opening anchor tag 3: Support URL 4: closing open a tag 5: closing anchor tag and p tag.
+			esc_html__( '%1$sEnter Help Scout API Information below. For details on how to find this information and setting your pages/shortcodes please review the %2$s%3$s%4$sdocumention%5$s', 'help-scout' ),
+			'<p>',
+			'<a href="',
+			esc_attr( SUPPORT_URL ),
+			'">',
+			'</a>.</p>',
+		);
 	}
 
 	public static function section_desc() {
-		_e( 'Make sure to setup your Help Scout API key and Mailbox ID before proceeding to these options / settings.', 'help-scout-desk' );
+		esc_html_e( 'Make sure to setup your Help Scout API key and Mailbox ID before proceeding to these options / settings.', 'help-scout' );
 	}
 
 	public static function auth_button() {
 		ob_start();
 		if ( '' == self::$app_id ) {
-			printf( '<a href="javascript::void(0)" class="button" disabled="disabled">%1$s</a>', __( 'Authorize', 'help-scout-desk' ) );
+			printf( '<a href="javascript::void(0)" class="button" disabled="disabled">%1$s</a>', esc_html__( 'Authorize', 'help-scout' ) );
 		} else {
-			printf( '<a href="https://secure.helpscout.net/authentication/authorizeClientApplication?client_id=%1$s" class="button">%2$s</a>', self::$app_id, __( 'Authorize', 'help-scout-desk' ) );
+			printf( '<a href="https://secure.helpscout.net/authentication/authorizeClientApplication?client_id=%1$s" class="button">%2$s</a>', esc_attr( self::$app_id ), esc_html__( 'Authorize', 'help-scout' ) );
 		}
 		return ob_get_clean();
 	}
@@ -163,7 +175,7 @@ class HSD_Settings extends HSD_Controller {
 	public static function reset_customer_ids() {
 		ob_start();
 		?>
-			<span class="button" id="reset_customer_ids" data-nonce="<?php wp_create_nonce( HSD_NONCE ) ?>"><?php _e( 'Reset Customer IDS', 'help-scout-desk' ) ?></span>
+			<span class="button" id="reset_customer_ids" data-nonce="<?php wp_create_nonce( self::HSD_NONCE ); ?>"><?php esc_html_e( 'Reset Customer IDS', 'help-scout' ); ?></span>
 			<script type="text/javascript">
 				//<![CDATA[
 				jQuery("#reset_customer_ids").on('click', function(event) {
@@ -173,12 +185,12 @@ class HSD_Settings extends HSD_Controller {
 
 					$button.after('<span class="spinner si_inline_spinner" style="visibility:visible;display:inline-block;"></span>');
 
-					if( confirm( '<?php _e( 'Are you sure? This will delete stored customer ids for your users.', 'help-scout-desk' ) ?>' ) ) {
+					if( confirm( '<?php esc_html_e( 'Are you sure? This will delete stored customer ids for your users.', 'help-scout' ); ?>' ) ) {
 						jQuery.post( ajaxurl, { action: 'hsd_reset_customer_ids', nonce: $button.data('nonce') },
 							function( data ) {
 								jQuery('.si_inline_spinner').remove();
 								jQuery("#reset_customer_ids").removeClass('button');
-								jQuery("#reset_customer_ids").html('<?php _e( 'All done', 'help-scout-desk' ) ?>');
+								jQuery("#reset_customer_ids").html('<?php esc_html_e( 'All done', 'help-scout' ); ?>');
 							}
 						);
 					}

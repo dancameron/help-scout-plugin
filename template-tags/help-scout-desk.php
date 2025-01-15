@@ -15,7 +15,7 @@ if ( ! function_exists( 'sa_get_truncate' ) ) :
 
 		$text = apply_filters( 'the_excerpt', $text );
 		$text = str_replace( ']]>', ']]&gt;', $text );
-		$text = strip_tags( $text );
+		$text = wp_strip_all_tags( $text );
 
 		$words = explode( ' ', $text, $excerpt_length + 1 );
 		if ( count( $words ) > $excerpt_length ) {
@@ -41,14 +41,14 @@ if ( ! function_exists( 'hsd_get_status_label' ) ) :
 		// match up labels with bootstrap
 		switch ( $status ) {
 			case 'closed':
-				$label = __( 'closed', 'help-scout-desk' );
+				$label = __( 'closed', 'help-scout' );
 				break;
 			case 'pending':
-				$label = __( 'pending', 'help-scout-desk' );
+				$label = __( 'pending', 'help-scout' );
 				break;
 			case 'active':
 			default:
-				$label = __( 'active', 'help-scout-desk' );
+				$label = __( 'active', 'help-scout' );
 				break;
 		}
 		return $label;
@@ -79,9 +79,13 @@ if ( ! function_exists( 'hsd_get_waiting_since' ) ) :
 		if ( 0 === $days_since ) {
 			$waiting = date_i18n( get_option( 'time_format' ), $last_updated );
 		} elseif ( 2 > $days_since ) {
-			$waiting = sprintf( __( 'yesterday', 'help-scout-desk' ), $days_since );
+			$waiting = sprintf( __( 'yesterday', 'help-scout' ), $days_since );
 		} elseif ( 7 > $days_since ) {
-			$waiting = sprintf( __( '%s days ago', 'help-scout-desk' ), $days_since );
+			$waiting = sprintf(
+				// translators: 1: number of days ago
+				__( '%1$s days ago', 'help-scout' ),
+				$days_since
+			);
 		} else {
 			$waiting = date_i18n( get_option( 'date_format' ), $last_updated );
 		}
@@ -115,16 +119,16 @@ if ( ! function_exists( 'hsd_get_status_class' ) ) :
 		// match up labels with bootstrap
 		switch ( $status ) {
 			case 'active':
-				$label = __( 'primary', 'help-scout-desk' );
+				$label = __( 'primary', 'help-scout' );
 				break;
 			case 'closed':
-				$label = __( 'success', 'help-scout-desk' );
+				$label = __( 'success', 'help-scout' );
 				break;
 			case 'pending':
-				$label = __( 'warning', 'help-scout-desk' );
+				$label = __( 'warning', 'help-scout' );
 				break;
 			default:
-				$label = __( 'default', 'help-scout-desk' );
+				$label = __( 'default', 'help-scout' );
 				break;
 		}
 		return $label;
@@ -166,9 +170,9 @@ if ( ! function_exists( 'pp' ) ) {
 	 */
 	function pp() {
 		$msg = _v_build_message( func_get_args() );
-		echo '<pre style="white-space:pre-wrap; text-align: left; '.
-			'font: normal normal 11px/1.4 menlo, monaco, monospaced; '.
-			'background: white; color: black; padding: 5px;">'.$msg.'</pre>';
+		echo '<pre style="white-space:pre-wrap; text-align: left; ' .
+			'font: normal normal 11px/1.4 menlo, monaco, monospaced; ' .
+			'background: white; color: black; padding: 5px;">' . esc_html( $msg ) . '</pre>';
 	}
 	/**
 	 * more elegant way to display a var dump
@@ -176,9 +180,9 @@ if ( ! function_exists( 'pp' ) ) {
 	 */
 	function dp() {
 		$msg = _v_build_message( func_get_args(), 'var_dump' );
-		echo '<pre style="white-space:pre-wrap;; text-align: left; '.
-			'font: normal normal 11px/1.4 menlo, monaco, monospaced; '.
-			'background: white; color: black; padding: 5px;">'.$msg.'</pre>';
+		echo '<pre style="white-space:pre-wrap;; text-align: left; ' .
+			'font: normal normal 11px/1.4 menlo, monaco, monospaced; ' .
+			'background: white; color: black; padding: 5px;">' . esc_html( $msg ) . '</pre>';
 	}
 
 	/**

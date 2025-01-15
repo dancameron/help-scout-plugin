@@ -42,7 +42,12 @@ abstract class HSD_Controller extends HelpScout_Desk {
 
 	public static function please_rate_hs( $footer_text ) {
 		if ( self::is_hsd_admin() ) {
-			$footer_text = sprintf( __( 'Please support the future of <strong>Help Scout</strong> by rating the free version <a href="%1$s" target="_blank">&#9733;&#9733;&#9733;&#9733;&#9733;</a> on <a href="%1$s" target="_blank">WordPress.org</a>. Have an awesome %2$s!', 'help-scout-desk' ), 'http://wordpress.org/support/view/plugin-reviews/help-scout?filter=5', date_i18n('l') );
+			$footer_text = sprintf(
+				// translators: 1: URL to plugin review page, 2: Day of the week
+				__( 'Please support the future of <strong>Help Scout</strong> by rating the free version <a href="%1$s" target="_blank">&#9733;&#9733;&#9733;&#9733;&#9733;</a> on <a href="%1$s" target="_blank">WordPress.org</a>. Have an awesome %2$s!', 'help-scout' ),
+				'http://wordpress.org/support/view/plugin-reviews/help-scout?filter=5',
+				date_i18n( 'l' ),
+			);
 		}
 		return $footer_text;
 	}
@@ -139,8 +144,8 @@ abstract class HSD_Controller extends HelpScout_Desk {
 			'admin_ajax' => admin_url( 'admin-ajax.php' ),
 			'sec' => wp_create_nonce( self::NONCE ),
 			'post_id' => get_the_ID(),
-			'readmore' => __( 'Expand message', 'help-scout-desk' ),
-			'close' => __( 'Collapse message', 'help-scout-desk' ),
+			'readmore' => __( 'Expand message', 'help-scout' ),
+			'close' => __( 'Collapse message', 'help-scout' ),
 			'redactor' => false,
 		);
 		if ( file_exists( HSD_PATH . '/resources/front-end/plugins/redactor/redactor.min.js' ) ) {
@@ -165,17 +170,17 @@ abstract class HSD_Controller extends HelpScout_Desk {
 	 * @return array
 	 */
 	public static function hsd_cron_schedule( $schedules ) {
-		$schedules['minute'] = array(
+		$schedules['minute']      = array(
 			'interval' => 60,
-			'display' => __( 'Once a Minute' )
+			'display'  => __( 'Once a Minute', 'help-scout' ),
 		);
 		$schedules['quarterhour'] = array(
 			'interval' => 900,
-			'display' => __( '15 Minutes' )
+			'display'  => __( '15 Minutes', 'help-scout' ),
 		);
-		$schedules['halfhour'] = array(
+		$schedules['halfhour']    = array(
 			'interval' => 1800,
-			'display' => __( 'Twice Hourly' )
+			'display'  => __( 'Twice Hourly', 'help-scout' ),
 		);
 		return $schedules;
 	}
@@ -276,12 +281,21 @@ abstract class HSD_Controller extends HelpScout_Desk {
 	//////////////
 
 	public static function login_required( $redirect = '' ) {
+		$nonce = isset( $_REQUEST['hsd_nonce'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['hsd_nonce'] ) ) : '';
+
+		if ( ! wp_verify_nonce( $nonce, self::NONCE ) ) {
+			self::ajax_fail( __( 'Help Scout Login Required Invalid Nonce', 'help-scout' ) );
+		}
+
 		if ( ! get_current_user_id() && apply_filters( 'hsd_login_required', true ) ) {
 			if ( ! $redirect && self::using_permalinks() ) {
+				$server_name = isset( $_SERVER['SERVER_NAME'] ) ? esc_url_raw( wp_unslash( $_SERVER['SERVER_NAME'] ) ) : '';
+				$server_uri  = isset( $_SERVER['REQUEST_URI'] ) ? esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+
 				$schema = is_ssl() ? 'https://' : 'http://';
-				$redirect = $schema.$_SERVER['SERVER_NAME'].htmlspecialchars( $_SERVER['REQUEST_URI'] );
+				$redirect = $schema . $server_name . $server_uri;
 				if ( isset( $_REQUEST ) ) {
-					$redirect = urlencode( add_query_arg( $_REQUEST, esc_url_raw( $redirect ) ) );
+					$redirect = rawurlencode( add_query_arg( $_REQUEST, esc_url_raw( $redirect ) ) );
 				}
 			}
 			wp_redirect( wp_login_url( $redirect ) );
@@ -330,15 +344,15 @@ abstract class HSD_Controller extends HelpScout_Desk {
 
 	public static function ajax_fail( $message = '', $json = true ) {
 		if ( $message == '' ) {
-			$message = __( 'Something failed.', 'help-scout-desk' );
+			$message = __( 'Something failed.', 'help-scout' );
 		}
 		if ( $json ) { header( 'Content-type: application/json' ); }
 		if ( self::DEBUG ) { header( 'Access-Control-Allow-Origin: *' ); }
 		if ( $json ) {
-			echo json_encode( array( 'error' => 1, 'response' => $message ) );
+			echo wp_json_encode( array( 'error' => 1, 'response' => $message ) );
 		}
 		else {
-			echo $message;
+			echo esc_html( $message );
 		}
 		exit();
 	}
@@ -376,11 +390,11 @@ abstract class HSD_Controller extends HelpScout_Desk {
 		$links = array();
 
 		// Extract existing links and tags
-		$value = preg_replace_callback( 
-				'~(<a .*?>.*?</a>|<.*?>)~i', 
-				function ( $match ) use ( &$links ) { 
-					return '<' . array_push( $links, $match[1] ) . '>'; 
-				}, 
+		$value = preg_replace_callback(
+				'~(<a .*?>.*?</a>|<.*?>)~i',
+				function ( $match ) use ( &$links ) {
+					return '<' . array_push( $links, $match[1] ) . '>';
+				},
 				$value
 			);
 

@@ -1,14 +1,25 @@
 <div id="si_dashboard" class="sprout_apps_dash wrap about-wrap">
 
-	<img class="header_sa_logo" src="<?php echo HSD_RESOURCES . 'admin/icons/sproutapps.png' ?>" />
+	<img class="header_sa_logo" src="<?php echo esc_url( HSD_RESOURCES . 'admin/icons/sproutapps.png' ); ?>" />
 
-	<h1><?php printf( __( '<a href="%s">Sprout Apps</a> thanks you!', 'help-scout-desk' ), self::PLUGIN_URL ); ?></h1>
+	<h1>
+		<?php
+			printf(
+				// translators: 1: opening anchor tag, 2: closing anchor tag, 3: plugin url 4: closing anchor tag.
+				esc_html__( '%1$s%2$s%3$sSprout Apps%4$s thanks you!', 'help-scout' ),
+				'<a href="',
+				esc_url( self::PLUGIN_URL ),
+				'">',
+				'</a>',
+			);
+		?>
+	</h1>
 
-	<div class="about-text"><?php _e( 'Much thanks to Help Scout for partnering in this creation of this plugin, hopefully it helps your enjoyment of Help Scout. Our mission at Sprout Apps is to build a suite of apps/plugins to help small businesses and freelancers work more efficiently by reducing the tedious business tasks associated with client management...<em>seriously though</em>, I\'m trying to build something awesome that you will love. ', 'help-scout-desk' ) ?></div>
+	<div class="about-text"><?php esc_html_e( 'Much thanks to Help Scout for partnering in this creation of this plugin, hopefully it helps your enjoyment of Help Scout. Our mission at Sprout Apps is to build a suite of apps/plugins to help small businesses and freelancers work more efficiently by reducing the tedious business tasks associated with client management. ', 'help-scout' ); ?></div>
 
 	<div id="welcome-panel" class="welcome-panel clearfix">
 		<div class="welcome-panel-content">
-			<h2><?php _e( 'Sprout Apps News and Updates', 'help-scout-desk' ) ?></h2>
+			<h2><?php esc_html_e( 'Sprout Apps News and Updates', 'help-scout' ); ?></h2>
 			<?php
 				$maxitems = 0;
 				include_once( ABSPATH . WPINC . '/feed.php' );
@@ -20,14 +31,14 @@
 			?>
 			<div class="rss_widget clearfix">
 				<?php if ( $maxitems == 0 ) : ?>
-					<p><?php _e( 'Could not connect to SIserver for updates.', 'help-scout-desk' ); ?></p>
+					<p><?php esc_html_e( 'Could not connect to SIserver for updates.', 'help-scout' ); ?></p>
 				<?php else : ?>
 					<?php foreach ( $rss_items as $item ) :
-						$excerpt = sa_get_truncate( strip_tags( $item->get_content() ), 30 );
+						$excerpt = sa_get_truncate( wp_strip_all_tags( $item->get_content() ), 30 );
 						?>
 						<div>
-							<h4><a href="<?php echo esc_url( $item->get_permalink() ); ?>" title="<?php echo esc_attr( $item->get_title() ); ?>"><?php echo wp_strip_all_tags( $item->get_title() ); ?></a></h4>
-							<span class="rss_date"><?php echo wp_strip_all_tags( $item->get_date( 'j F Y' ) ) ?></span>
+							<h4><a href="<?php echo esc_url( $item->get_permalink() ); ?>" title="<?php echo esc_attr( $item->get_title() ); ?>"><?php echo esc_html( wp_strip_all_tags( $item->get_title() ) ); ?></a></h4>
+							<span class="rss_date"><?php echo esc_html( wp_strip_all_tags( $item->get_date( 'j F Y' ) ) ); ?></span>
 							<p><?php echo wp_kses_post( $excerpt ); ?></p>
 						</div>
 					<?php endforeach; ?>

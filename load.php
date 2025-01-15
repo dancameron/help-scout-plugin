@@ -131,10 +131,10 @@ if ( HSD_SUPPORTED_WP_VERSION && HSD_SUPPORTED_PHP_VERSION ) {
 	add_action( 'admin_head', 'hsd_fail_notices' );
 	function hsd_fail_notices() {
 		if ( ! HSD_SUPPORTED_WP_VERSION ) {
-			printf( '<div class="error"><p><strong>Help Scout Desk</strong> requires WordPress 4.0 or higher (you have %s). Please upgrade WordPress and activate the Help Scout Desk Plugin again.</p></div>', get_bloginfo( 'version' ) );
+			printf( '<div class="error"><p><strong>Help Scout Desk</strong> requires WordPress 4.0 or higher (you have %s). Please upgrade WordPress and activate the Help Scout Desk Plugin again.</p></div>', esc_html( get_bloginfo( 'version' ) ) );
 		}
 		if ( ! HSD_SUPPORTED_PHP_VERSION ) {
-			printf( '<div class="error"><p><strong>Help Scout Desk</strong> requires PHP version 5.4 or higher to be installed on your server (you have %s). Talk to your web host about using a secure version of PHP.</p></div>', phpversion() );
+			printf( '<div class="error"><p><strong>Help Scout Desk</strong> requires PHP version 5.4 or higher to be installed on your server (you have %s). Talk to your web host about using a secure version of PHP.</p></div>', esc_html( phpversion() ) );
 		}
 	}
 }

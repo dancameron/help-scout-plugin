@@ -1,8 +1,8 @@
 === Help Scout ===
-Contributors: helpscout, sproutapps, dancameron, elanasparkle
-Tags: help, support, documentation, helpdesk, contact form, contact, help desk
+Contributors: helpscout, sproutapps, dancameron, elanasparkle, avonville1
+Tags: support, documentation, helpdesk, contact form help desk
 Requires at least: 4.5
-Tested up to: 5.7
+Tested up to: 6.7
 Stable tag: 6.5.1
 Release 6.5.1
 License: GPLv2 or later
@@ -14,7 +14,7 @@ Add a contact form to your website, or embed Help Scout Beacon for instant answe
 
 = Help Scout for WordPress =
 
-Thousands of businesses in more than 140 countries use Help Scout to make every customer support interaction more human & more helpful. 
+Thousands of businesses in more than 140 countries use Help Scout to make every customer support interaction more human & more helpful.
 
 = Features =
 
@@ -55,7 +55,7 @@ First Release
 
 == Changelog ==
 
-= 6.5.1 = 
+= 6.5.1 =
 * **Fix:** SSL Verify update
 * **Fix:** Label Changes
 

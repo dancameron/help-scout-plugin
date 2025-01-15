@@ -203,7 +203,7 @@ class HelpScout_API extends HSD_Controller {
 			$threads_response = json_decode( wp_json_encode( json_decode( $threads_response ) ), true );
 
 			if ( empty( $threads_response['_embedded']['threads'] ) ) {
-				wp_die( sprintf( '<span class="hsd_error">%s</span>', __( 'EMPTY API RETURN', 'help-scout-desk' ) ) );
+				wp_die( sprintf( '<span class="hsd_error">%s</span>', esc_html__( 'EMPTY API RETURN', 'help-scout' ) ) );
 			}
 
 			$con_and_threads['threads'] = $threads_response['_embedded']['threads'];
@@ -476,7 +476,9 @@ class HelpScout_API extends HSD_Controller {
 	}
 
 	public static function maybe_reset_customer_ids() {
-		if ( ! current_user_can( 'manage_options' ) && wp_verify_nonce( $_GET['nonce'], HSD_Settings::HSD_NONCE ) ) {
+		$nonce = isset( $_GET['nonce'] ) ? sanitize_text_field( wp_unslash( $_GET['nonce'] ) ) : '';
+
+		if ( ! current_user_can( 'manage_options' ) && wp_verify_nonce( $nonce, HSD_Settings::HSD_NONCE ) ) {
 			return;
 		}
 
