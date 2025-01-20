@@ -51,46 +51,4 @@ abstract class HelpScout_Desk {
 	 * </code>
 	 */
 	const DEBUG = HSD_DEV;
-
-	/**
-	 * A wrapper around WP's __() to add the plugin's text domain
-	 *
-	 * @param string  $string
-	 * @return string|void
-	 */
-	public static function __( $string ) {
-		// deprecated
-		return __( apply_filters( 'hsd_string_'.sanitize_title( $string ), $string ), self::TEXT_DOMAIN );
-	}
-
-	/**
-	 * A wrapper around WP's _e() to add the plugin's text domain
-	 *
-	 * @param string  $string
-	 * @return void
-	 */
-	public static function _e( $string ) {
-		// deprecated
-		return _e( apply_filters( 'hsd_string_'.sanitize_title( $string ), $string ), self::TEXT_DOMAIN );
-	}
-
-	/**
-	 * Wrapper around esc_attr__
-	 * @param  string $string
-	 * @return
-	 */
-	public static function esc__( $string ) {
-		// deprecated
-		return esc_attr__( $string, self::TEXT_DOMAIN );
-	}
-
-	/**
-	 * Wrapper around esc_attr__
-	 * @param  string $string
-	 * @return
-	 */
-	public static function esc_e( $string ) {
-		// deprecated
-		return esc_attr_e( $string, self::TEXT_DOMAIN );
-	}
 }

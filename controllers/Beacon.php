@@ -29,7 +29,7 @@ class HSD_Beacon extends HSD_Controller {
 			array( '<script>', '</script>', '<script type="text/javascript">' ),
 			array( '', '', '' ),
 		self::$beacon_embed );
-		return $code;
+		wp_add_inline_script( 'hsd', $code );
 	}
 
 	private static function is_beacon_2() {
@@ -58,9 +58,9 @@ class HSD_Beacon extends HSD_Controller {
 				self::$beacon_key
 			);
 			?>
-				
+
 				<script type="text/javascript">
-					<?php echo self::embed_code(); ?>
+					<?php self::embed_code(); ?>
 
 					<?php if ( self::is_beacon_2() ) : ?>
 
@@ -69,7 +69,7 @@ class HSD_Beacon extends HSD_Controller {
 								name: "<?php echo esc_js( $name ); ?>",
 								email: "<?php echo esc_js( $email ) ?>",
 								signature: "<?php echo esc_js( $signature ) ?>"
-							});					
+							});
 						<?php else : ?>
 							window.Beacon("identify", {
 								name: "<?php echo esc_js( $name ); ?>",
@@ -90,7 +90,7 @@ class HSD_Beacon extends HSD_Controller {
 		} else {
 			?>
 				<script type="text/javascript">
-					<?php echo self::embed_code(); ?>
+					<?php self::embed_code(); ?>
 
 					<?php if ( self::is_beacon_2() ) : ?>
 						// nothing yet
@@ -118,17 +118,21 @@ class HSD_Beacon extends HSD_Controller {
 				'weight' => 30,
 				'settings' => array(
 					self::BEACON_OPTION => array(
-						'label' => __( 'Beacon', 'help-scout-desk' ),
+						'label' => __( 'Beacon', 'help-scout' ),
 						'option' => array(
-							'description' => sprintf( __( 'Copy and paste the beacon embed code. For more information about this please read the <a href="%s">Help Scout documentation</a>.', 'help-scout-desk' ), 'http://developer.helpscout.net/beacons/' ),
+							'description' => sprintf(
+								// translators: !: link to the Help Scout documentation.
+								__( 'Copy and paste the beacon embed code. For more information about this please read the <a href="%1$s">Help Scout documentation</a>.', 'help-scout' ),
+								'http://developer.helpscout.net/beacons/'
+							),
 							'type' => 'textarea',
 							'default' => get_option( self::BEACON_OPTION, '' ),
 						),
 					),
 					self::BEACON_SEC_OPTION => array(
-						'label' => __( 'Support history security key', 'help-scout-desk' ),
+						'label' => __( 'Support history security key', 'help-scout' ),
 						'option' => array(
-							'description' => sprintf( __( 'Click "advanced" for the "Support history security" option when setting up your Beacon.', 'help-scout-desk' ) ),
+							'description' => sprintf( __( 'Click "advanced" for the "Support history security" option when setting up your Beacon.', 'help-scout' ) ),
 							'type' => 'input',
 							'default' => get_option( self::BEACON_SEC_OPTION, '' ),
 						),

@@ -60,9 +60,6 @@ class SA_Settings_API extends HSD_Controller {
 		// AJAX Actions
 		add_action( 'wp_ajax_si_save_options', array( __CLASS__, 'maybe_save_options_via_ajax' ) );
 
-		// Utility Actions
-		add_action( 'sprout_settings_tabs', array( __CLASS__, 'display_settings_tabs' ) );
-
 		//////////////////
 		// Meta Box API //
 		//////////////////
@@ -75,12 +72,24 @@ class SA_Settings_API extends HSD_Controller {
 
 		// save meta boxes
 		add_action( 'save_post', array( __CLASS__, 'save_meta_boxes' ), 10, 2 );
+
+		// add submission query vars
+		add_filter( 'query_vars', array( __CLASS__, 'add_query_vars' ) );
+
 	}
 
+	/**
+	 * Add query vars for settings page
+	 *
+	 * @param  array $vars query vars.
+	 *
+	 * @return array $vars modified query vars.
+	 */
+	public static function add_query_vars( $vars ) {
+		$vars[] = 'page';
 
-	//////////////////
-	// Admin Pages //
-	//////////////////
+		return $vars;
+	}
 
 	public static function manage_capability() {
 		return apply_filters( 'manage_help_scout_options', 'manage_options' );
@@ -171,12 +180,30 @@ class SA_Settings_API extends HSD_Controller {
 	public static function add_admin_page() {
 
 		// Add parent menu for SI
-		self::$settings_page = add_submenu_page( 'options-general.php', __( 'Help Scout', 'sprout-invoices' ), __( 'Help Scout', 'sprout-invoices' ), self::manage_capability(), self::APP_DOMAIN, array( __CLASS__, 'default_admin_page' ) );
+		self::$settings_page = add_submenu_page( 'options-general.php', __( 'Help Scout', 'help-scout' ), __( 'Help Scout', 'help-scout' ), self::manage_capability(), self::APP_DOMAIN, array( __CLASS__, 'default_admin_page' ) );
 
 	}
 
 	public static function dashboard_page() {
 		self::load_view( 'admin/sprout-apps-dashboard.php', array() );
+	}
+
+	/**
+	 * Get the current settings page slug.
+	 *
+	 * Example: settings_page_help-scout-desk to help-scout-desk
+	 *
+	 * @param  string $page the page id.
+	 *
+	 * @return string $result the page slug.
+	 */
+	public static function get_current_settings_page( $page = '' ) {
+
+		// Match everything after the last "_"
+		if ( preg_match( '/[^_]+$/', $page, $matches ) ) {
+			$result = $matches[0];
+			return $result;
+		}
 	}
 
 	/**
@@ -186,94 +213,36 @@ class SA_Settings_API extends HSD_Controller {
 	 * @return void
 	 */
 	public static function default_admin_page() {
+
 		if ( ! current_user_can( self::manage_capability() ) ) {
 			return; // not allowed to view this page
 		}
+
 		if ( isset( $_GET['settings-updated'] ) && isset( $_GET['settings-updated'] ) ) {
 			// Update rewrite rules when options are updated.
 			flush_rewrite_rules();
 		}
-		if ( isset( $_GET['tab'] ) && $_GET['tab'] != '' ) {
-			$tabs = apply_filters( 'si_option_tabs', self::$option_tabs );
-			if ( isset( $tabs[ $_GET['tab'] ] ) ) {
-				$tab_args = $tabs[ $_GET['tab'] ];
-				if ( isset( $tab_args['callback'] ) && is_callable( $tab_args['callback'] ) ) {
-					call_user_func_array( $tab_args['callback'], array() );
-				} else {
-					$plugin_page = $_GET['page'];
-					$title = ( isset( $tabs['title'] ) ) ? $tabs['title'] : '' ;
-					$ajax = isset( $tabs['ajax'] )?$tabs['ajax']:'';
-					$ajax_full_page = isset( $tabs['ajax_full_page'] )?$tabs['ajax_full_page']:'';
-					$reset = isset( $tabs['reset'] )?$tabs['reset']:'';
-					$section = isset( $tabs['section'] )?$tabs['section']:'';
 
-					self::load_view( 'admin/settings', array(
-						'title' => __( $title ),
-						'page' => $plugin_page,
-						'ajax' => $ajax,
-						'ajax_full_page' => $ajax_full_page,
-						'reset' => $reset,
-						'section' => $section,
-					), false );
-				}
-				return;
-			}
-		}
-		$plugin_page = $_GET['page'];
-		$title = ( isset( self::$admin_pages[ $plugin_page ]['title'] ) ) ? self::$admin_pages[ $plugin_page ]['title'] : '' ;
-		$ajax = isset( self::$admin_pages[ $plugin_page ]['ajax'] )?self::$admin_pages[ $plugin_page ]['ajax']:'';
-		$ajax_full_page = isset( self::$admin_pages[ $plugin_page ]['ajax_full_page'] )?self::$admin_pages[ $plugin_page ]['ajax_full_page']:'';
-		$reset = isset( self::$admin_pages[ $plugin_page ]['reset'] )?self::$admin_pages[ $plugin_page ]['reset']:'';
-		$section = isset( self::$admin_pages[ $plugin_page ]['section'] )?self::$admin_pages[ $plugin_page ]['section']:'';
+		$plugin_page    = self::get_current_settings_page( get_current_screen()->id );
+		$title          = ( isset( self::$admin_pages[ $plugin_page ]['title'] ) ) ? self::$admin_pages[ $plugin_page ]['title'] : '';
+		$ajax           = isset( self::$admin_pages[ $plugin_page ]['ajax'] ) ? self::$admin_pages[ $plugin_page ]['ajax'] : '';
+		$ajax_full_page = isset( self::$admin_pages[ $plugin_page ]['ajax_full_page'] ) ? self::$admin_pages[ $plugin_page ]['ajax_full_page'] : '';
+		$reset          = isset( self::$admin_pages[ $plugin_page ]['reset'] ) ? self::$admin_pages[ $plugin_page ]['reset'] : '';
+		$section        = isset( self::$admin_pages[ $plugin_page ]['section'] ) ? self::$admin_pages[ $plugin_page ]['section'] : '';
 
-		self::load_view( 'admin/settings', array(
-				'title' => __( $title ),
-				'page' => $plugin_page,
-				'ajax' => $ajax,
+		self::load_view(
+			'admin/settings',
+			array(
+				'title'          => $title,
+				'page'           => $plugin_page,
+				'ajax'           => $ajax,
 				'ajax_full_page' => $ajax_full_page,
-				'reset' => $reset,
-				'section' => $section,
-		), false );
-		return;
+				'reset'          => $reset,
+				'section'        => $section,
+			),
+			false
+		);
 	}
-	/**
-	 * Build the tabs for all the admin settings
-	 * @param  string $plugin_page slug for settings page
-	 * @return string              html
-	 */
-	public static function display_settings_tabs( $plugin_page = 0 ) {
-		if ( ! $plugin_page ) {
-			$plugin_page = ( self::APP_DOMAIN === $_GET['page'] ) ? self::APP_DOMAIN . '/' . self::SETTINGS_PAGE : $_GET['page'] ;
-		}
-		if ( ! isset( self::$admin_pages[ $plugin_page ]['section'] ) ) {
-			return;
-		}
-		// Section based on settings slug
-		$section = self::$admin_pages[ $plugin_page ]['section'];
-		// get all tabs and sort
-		$tabs = apply_filters( 'si_option_tabs', self::$option_tabs );
-		uasort( $tabs, array( __CLASS__, 'sort_by_weight' ) );
-		// loop through tabs and build markup
-		foreach ( $tabs as $key => $data ) :
-			if ( $data['section'] === $section ) {
-				$new_title = __( $data['tab_title'] );
-				$current = ( ( isset( $_GET['tab'] ) && $_GET['tab'] === $data['slug'] ) || ( ! isset( $_GET['tab'] ) && str_replace( self::APP_DOMAIN . '/', '', $plugin_page ) == $data['slug'] ) ) ? ' nav-tab-active' : '';
-				$url = ( $data['tab_only'] ) ? add_query_arg( array( 'page' => $plugin_page, 'tab' => $data['slug'] ), 'admin.php' ) : add_query_arg( array( 'page' => $plugin_page ), 'admin.php' );
-				echo '<a href="'.$url.'" class="nav-tab'.$current.'" id="si_options_tab_'.$data['slug'].'">'.$new_title.'</a>';
-			}
-		endforeach;
-		// Add the add new buttons after the tabs
-		foreach ( $tabs as $key => $data ) :
-			if ( $data['add_new'] && isset( $data['add_new_post_type'] ) ) {
-				$post_new_file = 'post-new.php?post_type=' . $data['add_new_post_type'];
-				echo ' <a href="' . esc_url( admin_url( $post_new_file ) ) . '" class="add-new-h2">' . wp_kses_post( $data['add_new'] ) . '</a>';
-			}
-		endforeach;
-	}
-
-	//////////////
-	// Settings //
-	//////////////
 
 	/**
 	 * Add all options via WP functions on admin_init
@@ -329,12 +298,12 @@ class SA_Settings_API extends HSD_Controller {
 			$out .= self::setting_form_field( $name, $args['option'] );
 		} else {
 			$label = ( isset( $args['option']['label'] ) ) ? $args['option']['label'] : '' ;
-			$out .= '<label for="'.$name.'">'.self::setting_form_field( $name, $args['option'] ).' '.$label.'</label>';
+			$out .= '<label for="' . $name . '">' . self::setting_form_field( $name, $args['option'] ) . ' ' . $label . '</label>';
 			if ( ! empty( $args['option']['description'] ) ) {
-				$out .= '<p class="description help_block">'.$args['option']['description'].'</p>';
+				$out .= '<p class="description help_block">' . $args['option']['description'] . '</p>';
 			}
 		}
-		print apply_filters( 'sprout_settings_option_field', $out, $name, $args );
+		print apply_filters( 'sprout_settings_option_field', $out, $name, $args ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	}
 
 	/**
@@ -367,7 +336,7 @@ class SA_Settings_API extends HSD_Controller {
 		ob_start(); ?>
 
 		<?php if ( $data['type'] == 'textarea' ) : ?>
-			<textarea type="textarea" name="<?php echo esc_attr( $name ); ?>" id="<?php echo esc_attr( $name ); ?>" rows="<?php echo isset( $data['rows'] )?$data['rows']:4; ?>" cols="<?php echo isset( $data['cols'] )?$data['cols']:40; ?>" <?php foreach ( $data['attributes'] as $attr => $attr_value ) { echo esc_attr( $attr ).'="'.esc_attr( $attr_value ).'" '; } ?> <?php if ( isset( $data['required'] ) && $data['required'] ) { echo 'required'; } ?>><?php echo esc_textarea( $data['default'] ); ?></textarea>
+			<textarea type="textarea" name="<?php echo esc_attr( $name ); ?>" id="<?php echo esc_attr( $name ); ?>" rows="<?php echo isset( $data['rows'] ) ? esc_attr( $data['rows'] ): 4; ?>" cols="<?php echo isset( $data['cols'] )? esc_attr( $data['cols'] ): 40; ?>" <?php foreach ( $data['attributes'] as $attr => $attr_value ) { echo esc_attr( $attr ).'="'.esc_attr( $attr_value ).'" '; } ?> <?php if ( isset( $data['required'] ) && $data['required'] ) { echo 'required'; } ?>><?php echo esc_textarea( $data['default'] ); ?></textarea>
 		<?php elseif ( $data['type'] == 'wysiwyg' ) : ?>
 			<?php
 				wp_editor_styleless( $data['default'], $name, array( 'textarea_rows' => 10 ) ); ?>
@@ -376,7 +345,7 @@ class SA_Settings_API extends HSD_Controller {
 				<?php foreach ( $data['options'] as $group => $states ) : ?>
 					<optgroup label="<?php echo esc_attr( $group ); ?>">
 						<?php foreach ( $states as $option_key => $option_label ) : ?>
-							<option value="<?php echo esc_attr( $option_key ) ?>" <?php selected( $option_key, $data['default'] ) ?>><?php echo wp_strip_all_tags( $option_label ); ?></option>
+							<option value="<?php echo esc_attr( $option_key ) ?>" <?php selected( $option_key, $data['default'] ) ?>><?php echo esc_html( $option_label ); ?></option>
 						<?php endforeach; ?>
 					</optgroup>
 				<?php endforeach; ?>
@@ -384,13 +353,13 @@ class SA_Settings_API extends HSD_Controller {
 		<?php elseif ( $data['type'] == 'select' ) : ?>
 			<select type="select" name="<?php echo esc_attr( $name ); ?>" id="<?php echo esc_attr( $name ); ?>" <?php foreach ( $data['attributes'] as $attr => $attr_value ) { echo esc_attr( $attr ).'="'.esc_attr( $attr_value ).'" '; } ?> <?php if ( isset( $data['required'] ) && $data['required'] ) { echo 'required'; } ?>>
 				<?php foreach ( $data['options'] as $option_key => $option_label ) : ?>
-				<option value="<?php echo esc_attr( $option_key ); ?>" <?php selected( $option_key, $data['default'] ) ?>><?php echo wp_strip_all_tags( $option_label ); ?></option>
+				<option value="<?php echo esc_attr( $option_key ); ?>" <?php selected( $option_key, $data['default'] ) ?>><?php echo esc_html( $option_label ); ?></option>
 				<?php endforeach; ?>
 			</select>
 		<?php elseif ( $data['type'] == 'multiselect' ) : ?>
 			<select type="select" name="<?php echo esc_attr( $name ); ?>[]" id="<?php echo esc_attr( $name ); ?>" <?php foreach ( $data['attributes'] as $attr => $attr_value ) { echo esc_attr( $attr ).'="'.esc_attr( $attr_value ).'" '; } ?> multiple="multiple" <?php if ( isset( $data['required'] ) && $data['required'] ) { echo 'required'; } ?>>
 				<?php foreach ( $data['options'] as $option_key => $option_label ) : ?>
-					<option value="<?php echo esc_attr( $option_key ); ?>" <?php if ( in_array( $option_key, $data['default'] ) ) { echo 'selected="selected"'; } ?>><?php echo wp_strip_all_tags( $option_label ); ?></option>
+					<option value="<?php echo esc_attr( $option_key ); ?>" <?php if ( in_array( $option_key, $data['default'] ) ) { echo 'selected="selected"'; } ?>><?php echo esc_html( $option_label ); ?></option>
 				<?php endforeach; ?>
 			</select>
 		<?php elseif ( $data['type'] == 'radios' ) : ?>
@@ -399,101 +368,22 @@ class SA_Settings_API extends HSD_Controller {
 				<br />
 			<?php endforeach; ?>
 		<?php elseif ( $data['type'] == 'checkbox' ) : ?>
-			<input type="checkbox" name="<?php echo esc_attr( $name ); ?>" id="<?php echo esc_attr( $name ); ?>" <?php checked( $data['value'], $data['default'] ); ?> value="<?php echo isset( $data['value'] )?$data['value']:'On'; ?>" <?php foreach ( $data['attributes'] as $attr => $attr_value ) { echo esc_attr( $attr ).'="'.esc_attr( $attr_value ).'" '; } ?> <?php if ( isset( $data['required'] ) && $data['required'] ) { echo 'required'; } ?>/>
+			<input type="checkbox" name="<?php echo esc_attr( $name ); ?>" id="<?php echo esc_attr( $name ); ?>" <?php checked( $data['value'], $data['default'] ); ?> value="<?php echo isset( $data['value'] )? esc_attr( $data['value'] ):'On'; ?>" <?php foreach ( $data['attributes'] as $attr => $attr_value ) { echo esc_attr( $attr ).'="'.esc_attr( $attr_value ).'" '; } ?> <?php if ( isset( $data['required'] ) && $data['required'] ) { echo 'required'; } ?>/>
 		<?php elseif ( $data['type'] == 'hidden' ) : ?>
 			<input type="hidden" name="<?php echo esc_attr( $name ); ?>" id="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $data['value'] ); ?>" <?php foreach ( $data['attributes'] as $attr => $attr_value ) { echo esc_attr( $attr ).'="'.esc_attr( $attr_value ).'" '; } ?> />
 		<?php elseif ( $data['type'] == 'file' ) : ?>
 			<input type="file" name="<?php echo esc_attr( $name ); ?>" id="<?php echo esc_attr( $name ); ?>" <?php if ( isset( $data['required'] ) && $data['required'] ) { echo 'required'; } ?>/>
-		<?php elseif ( $data['type'] == 'pages' ) : ?>
-			<?php
-				$defaults = array(
-					'name' => $name,
-					'echo' => 1,
-					'show_option_none' => __( '-- Select --', 'sprout-invoices' ),
-					'option_none_value' => '0',
-					'selected' => $data['default'],
-					);
-				$parsed_args = wp_parse_args( $data['args'], $defaults );
-				wp_dropdown_pages( $parsed_args ); ?>
-		<?php elseif ( $data['type'] == 'bypass' ) : ?>
-			<?php if ( isset( $data['output'] ) ) { echo $data['output']; } // not escaped ?>
+		<?php elseif ( 'reset_ids' === $data['type'] ) : ?>
+			<span class="button" id="reset_customer_ids" data-nonce="<?php wp_create_nonce( HSD_Settings::HSD_NONCE ); ?>"><?php esc_html_e( 'Reset Customer IDS', 'help-scout' ); ?></span>
 		<?php else : ?>
-			<input type="<?php echo esc_attr( $data['type'] ); ?>" name="<?php echo esc_attr( $name ); ?>" id="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $data['default'] ); ?>" placeholder="<?php echo isset( $data['placeholder'] )?$data['placeholder']:''; ?>" size="<?php echo isset( $data['size'] )?$data['size']:40; ?>" <?php foreach ( $data['attributes'] as $attr => $attr_value ) { echo esc_attr( $attr ).'="'.esc_attr( $attr_value ).'" '; } ?> <?php if ( isset( $data['required'] ) && $data['required'] ) { echo 'required'; } ?> class="text-input" />
+			<input type="<?php echo esc_attr( $data['type'] ); ?>" name="<?php echo esc_attr( $name ); ?>" id="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $data['default'] ); ?>" placeholder="<?php echo isset( $data['placeholder'] )? esc_html( $data['placeholder'] ):''; ?>" size="<?php echo isset( $data['size'] )? esc_html( $data['size'] ):40; ?>" <?php foreach ( $data['attributes'] as $attr => $attr_value ) { echo esc_attr( $attr ).'="'.esc_attr( $attr_value ).'" '; } ?> <?php if ( isset( $data['required'] ) && $data['required'] ) { echo 'required'; } ?> class="text-input" />
 		<?php endif; ?>
-
 		<?php if ( $data['type'] != 'checkbox' && ! empty( $data['description'] ) ) : ?>
 			<p class="description help_block"><?php echo wp_kses_post( $data['description'] ); ?></p>
 		<?php endif; ?>
 		<?php
 		return apply_filters( 'si_admin_settings_form_field', ob_get_clean(), $name, $data );
 	}
-
-	///////////////////
-	// AJAX Methods //
-	///////////////////
-
-	/**
-	 * Attempt to save the current page options
-	 * @return
-	 */
-	public static function maybe_save_options_via_ajax() {
-		if ( is_admin() ) {
-			if ( ! isset( $_POST['options'] ) ) {
-				return;
-			}
-
-			// unserialize
-			wp_parse_str( $_POST['options'], $options );
-			// Confirm the form was an update
-			if ( isset( $options['action'] ) && $options['action'] == 'update' ) {
-
-				$option_page = ( isset( $options['option_page'] ) ) ? $options['option_page'] : 'general';
-
-				// capability check
-				$capability = apply_filters( "option_page_capability_{$option_page}", self::manage_capability() );
-				if ( ! current_user_can( $capability ) ) {
-					wp_die( __( 'Cheatin&#8217; uh?' ) );
-				}
-
-				self::update_options( $options, $option_page );
-				echo apply_filters( 'save_options_via_ajax_message', __( 'Saved', 'sprout-invoices' ), $option_page );
-				exit();
-			}
-		}
-	}
-
-	/**
-	 * Callback for saves options via AJAX method above.
-	 * @param  array  $submission
-	 * @param  string $option_page
-	 * @return
-	 */
-	public static function update_options( $submission = array(), $option_page = '' ) {
-		global $wp_settings_fields;
-
-		if ( ! isset( $wp_settings_fields[ $option_page ] ) ) {
-			return; }
-
-		if ( isset( $wp_settings_fields[ $option_page ] ) && ! empty( $wp_settings_fields[ $option_page ] ) ) {
-			foreach ( $wp_settings_fields[ $option_page ] as $section ) {
-				foreach ( $section as $option => $values ) {
-					$option = trim( $option );
-					$value = null;
-					if ( isset( $submission[ $option ] ) ) {
-						$value = $submission[ $option ];
-						if ( ! is_array( $value ) ) {
-							$value = trim( $value ); }
-						$value = wp_unslash( $value );
-					}
-					update_option( $option, $value );
-				}
-			}
-		}
-	}
-
-	//////////////////
-	// Meta Box API //
-	//////////////////
 
 	/**
 	 * Registered meta boxes for all post types, including the si_deal post type.
@@ -541,7 +431,7 @@ class SA_Settings_API extends HSD_Controller {
 			foreach ( $meta_boxes as $metabox_name => $args ) {
 				$args = apply_filters( $metabox_name . '_meta_box_args', $args );
 				extract( $args );
-				add_meta_box( $metabox_name, __( $title ), $callback, $screen, $context, $priority, $args );
+				add_meta_box( $metabox_name, $title, $callback, $screen, $context, $priority, $args );
 			}
 		}
 	}
@@ -572,6 +462,13 @@ class SA_Settings_API extends HSD_Controller {
 	 * @return
 	 */
 	public static function save_meta_boxes( $post_id, $post ) {
+
+		$nonce = ( isset( $_POST['si_meta_box_nonce'] ) ) ? sanitize_text_field( wp_unslash( $_POST['si_meta_box_nonce'] ) ) : '';
+
+		if ( ! wp_verify_nonce( $nonce, HSD_Settings::HSD_NONCE ) ) {
+			wp_die( 'Helpscout Security check failed' );
+		}
+
 		// Don't save meta boxes when the importer is used.
 		if ( isset( $_GET['import'] ) && $_GET['import'] == 'wordpress' ) {
 			return;

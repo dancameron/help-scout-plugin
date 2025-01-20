@@ -21,6 +21,22 @@ class HSD_Forms extends HSD_Controller {
 
 		// refresh data after submission
 		add_filter( 'hsd_scripts_localization', array( __CLASS__, 'add_refresh_qv' ) );
+
+		// add submission query vars
+		add_filter( 'query_vars', array( __CLASS__, 'add_query_vars' ) );
+	}
+
+	/**
+	 * Add the submission query vars
+	 * @param  array $vars
+	 * @return array
+	 */
+	public static function add_query_vars( $vars ) {
+		$vars[] = self::SUBMISSION_SUCCESS_QV;
+		$vars[] = self::SUBMISSION_ERROR_QV;
+		$vars[] = 'conversation_id';
+
+		return $vars;
 	}
 
 	/**
@@ -30,24 +46,33 @@ class HSD_Forms extends HSD_Controller {
 	 * @return
 	 */
 	public static function submission_form( $atts, $content = '' ) {
+
 		if ( ! HelpScout_API::is_customer() ) {
 			do_action( 'helpscout_desk_sc_form_not_customer' );
 			return;
 		}
 
 		if ( '' === $content ) {
-			$content = sprintf( __( 'Thank you, message received. <a href="%s">Send another message</a>.', 'help-scout-desk' ), remove_query_arg( self::SUBMISSION_SUCCESS_QV ) );
+			$content = sprintf(
+				// translators: 1: Url to send another message.
+				__( 'Thank you, message received. <a href="%1$s">Send another message</a>.', 'help-scout' ),
+				remove_query_arg( self::SUBMISSION_SUCCESS_QV )
+			);
 		}
 
 		// Don't show the form if not on the conversation view
-		if ( isset( $_GET[ self::SUBMISSION_SUCCESS_QV ] ) && $_GET[ self::SUBMISSION_SUCCESS_QV ] ) {
-			return self::load_view_to_string( 'shortcodes/success_message', array(
-				'message' => $content,
-			), true );
+		if ( ! empty( get_query_var( self::SUBMISSION_SUCCESS_QV ) ) && get_query_var( self::SUBMISSION_SUCCESS_QV ) ) {
+			return self::load_view_to_string(
+				'shortcodes/success_message',
+				array(
+					'message' => $content,
+				),
+				true
+			);
 		}
 		$error = false;
-		if ( isset( $_GET[ self::SUBMISSION_ERROR_QV ] ) && $_GET[ self::SUBMISSION_ERROR_QV ] ) {
-			$error = urldecode( $_GET[ self::SUBMISSION_ERROR_QV ] );
+		if ( ! empty( get_query_var( self::SUBMISSION_ERROR_QV ) ) && get_query_var( self::SUBMISSION_ERROR_QV ) ) {
+			$error = urldecode( get_query_var( self::SUBMISSION_ERROR_QV ) );
 		}
 
 		$mailbox_id = ( isset( $atts['mid'] ) ) ? $atts['mid'] : HSD_Settings::get_mailbox();
@@ -55,12 +80,16 @@ class HSD_Forms extends HSD_Controller {
 		// Show the form
 		wp_enqueue_script( 'hsd' );
 		wp_enqueue_style( 'hsd' );
-		return self::load_view_to_string( 'shortcodes/conversation_form', array(
-				'nonce' => wp_create_nonce( HSD_Controller::NONCE ),
-				'mid' => $mailbox_id,
-				'error' => $error,
-				'conversation_view' => ( isset( $_GET['conversation_id'] ) && $_GET['conversation_id'] != '' ),
-		), true );
+		return self::load_view_to_string(
+			'shortcodes/conversation_form',
+			array(
+				'nonce'             => wp_create_nonce( HSD_Controller::NONCE ),
+				'mid'               => $mailbox_id,
+				'error'             => $error,
+				'conversation_view' => ( ! empty( get_query_var( 'conversation_id' ) ) ),
+			),
+			true
+		);
 	}
 
 
@@ -69,12 +98,8 @@ class HSD_Forms extends HSD_Controller {
 	 * @return
 	 */
 	public static function maybe_process_form() {
-		$nonce_value = ( isset( $_REQUEST['hsd_nonce'] ) ) ? $_REQUEST['hsd_nonce'] : false ;
-		if ( ! $nonce_value ) {
-			return;
-		}
-
-		if ( ! wp_verify_nonce( $nonce_value, HSD_Controller::NONCE ) ) {
+		$nonce = isset( $_REQUEST['hsd_nonce'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['hsd_nonce'] ) ) : '';
+		if ( ! wp_verify_nonce( $nonce, HSD_Controller::NONCE ) ) {
 			return;
 		}
 
@@ -82,15 +107,15 @@ class HSD_Forms extends HSD_Controller {
 
 		$error = false;
 		if ( ! isset( $_POST['message'] ) || $_POST['message'] == '' ) {
-			$error = __( 'Message Required.', 'help-scout-desk' );
+			$error = __( 'Message Required.', 'help-scout' );
 		}
 		if ( ! isset( $_GET['conversation_id'] ) ) {
 			if ( ! isset( $_POST['subject'] ) || $_POST['subject'] == '' ) {
-				$error = __( 'Subject Required.', 'help-scout-desk' );
+				$error = __( 'Subject Required.', 'help-scout' );
 			}
 		}
 		if ( ! $error ) {
-			$success = self::process_form_submission();
+			$success = self::process_form_submission( $_POST );
 			if ( $success === true ) {
 				$redirect_url = null;
 				do_action( 'hsd_form_submitted_without_error', $success );
@@ -99,8 +124,8 @@ class HSD_Forms extends HSD_Controller {
 			}
 		}
 		$redirect_url = null;
-		do_action( 'hsd_form_submitted_with_error', $success );
-		wp_redirect( remove_query_arg( self::SUBMISSION_SUCCESS_QV, add_query_arg( self::SUBMISSION_ERROR_QV, urlencode( __( 'Failed Submission', 'help-scout-desk' ) ) ), esc_url_raw( apply_filters( 'si_hsd_thread_submitted_redirect_url', $redirect_url ) ) ) );
+		//do_action( 'hsd_form_submitted_with_error', $success );
+		wp_redirect( remove_query_arg( self::SUBMISSION_SUCCESS_QV, add_query_arg( self::SUBMISSION_ERROR_QV, urlencode( __( 'Failed Submission', 'help-scout' ) ) ), esc_url_raw( apply_filters( 'si_hsd_thread_submitted_redirect_url', $redirect_url ) ) ) );
 		exit();
 
 	}
@@ -109,30 +134,42 @@ class HSD_Forms extends HSD_Controller {
 	 * Process the form submission
 	 * @return
 	 */
-	public static function process_form_submission() {
+	public static function process_form_submission( $form_data ) {
+		if ( ! wp_verify_nonce( $form_data['hsd_nonce'], HSD_Controller::NONCE ) ) {
+			return;
+		}
+
 		$attachments = array();
 
 		$attachment_data = array();
 		if ( ! empty( $_FILES ) && isset( $_FILES['message_attachment'] ) ) {
-			$attach_count = count( $_FILES['message_attachment']['name'] );
+			$attach_count = count(
+				isset( $_FILES['message_attachment']['name'] ) ? $_FILES['message_attachment']['name'] : array()
+			);
 			for ( $n = 0; $n < $attach_count; $n++ ) {
 				if ( ! empty( $_FILES['message_attachment']['tmp_name'][ $n ] ) ) {
 					$attachment_data[] = array(
-						'fileName' => $_FILES['message_attachment']['name'][ $n ],
-						'mimeType' => $_FILES['message_attachment']['type'][ $n ],
-						'data' => base64_encode( file_get_contents( $_FILES['message_attachment']['tmp_name'][ $n ] ) ),
+						'fileName' => isset( $_FILES['message_attachment']['name'][ $n ] ) ? sanitize_text_field( wp_unslash( $_FILES['message_attachment']['name'][ $n ] ) ) : '',
+						'mimeType' => isset( $_FILES['message_attachment']['type'][ $n ] ) ? sanitize_mime_type( wp_unslash( $_FILES['message_attachment']['type'][ $n ] ) ) : '',
+						'data' => base64_encode( wp_remote_get( sanitize_text_field( $_FILES['message_attachment']['tmp_name'][ $n ] ) ) ),
 					);
 				}
 			}
 		}
 
-		if ( isset( $_POST['hsd_conversation_id'] ) && '' != $_POST['hsd_conversation_id'] ) {
+		if ( isset( $form_data['hsd_conversation_id'] ) && '' !== $form_data['hsd_conversation_id'] ) {
 			do_action( 'hsd_form_submitted_to_create_thread' );
-			$new_status = ( isset( $_POST['close_thread'] ) ) ? 'closed' : 'active' ;
-			$new_thread = HelpScout_API::create_thread( $_GET['conversation_id'], stripslashes( $_POST['message'] ), $new_status, esc_attr( $_POST['mid'], 'help-scout-desk' ), $attachment_data );
+			$new_status = ( isset( $form_data['close_thread'] ) ) ? 'closed' : 'active' ;
+			$new_thread = HelpScout_API::create_thread(
+				isset( $_GET['conversation_id'] ) ? sanitize_text_field( wp_unslash( $_GET['conversation_id'] ) ) : '',
+				stripslashes( $form_data['message'] ),
+				$new_status,
+				sanitize_text_field( wp_unslash( $form_data['mid'] ) ),
+				$attachment_data
+			);
 		} else {
 			do_action( 'hsd_form_submitted_to_create_conversation' );
-			$new_thread = HelpScout_API::create_conversation( stripslashes( $_POST['subject'] ), stripslashes( $_POST['message'] ), esc_attr( $_POST['mid'], 'help-scout-desk' ), $attachment_data );
+			$new_thread = HelpScout_API::create_conversation( stripslashes( $form_data['subject'] ), stripslashes( $form_data['message'] ), esc_attr( $form_data['mid'], 'help-scout' ), $attachment_data );
 		}
 
 		return apply_filters( 'hsd_process_form_submission_new_thread', $new_thread );
@@ -143,10 +180,15 @@ class HSD_Forms extends HSD_Controller {
 	 * @param array $hsd_js_object
 	 */
 	public static function add_refresh_qv( $hsd_js_object ) {
+		if ( ! wp_verify_nonce( $hsd_js_object['sec'], HSD_Controller::NONCE ) ) {
+			return;
+		}
+
 		$hsd_js_object['refresh_data'] = 0;
 		$hsd_js_object['current_page'] = max( 1, absint( get_query_var( 'page', 1 ) ) );
-		$hsd_js_object['status'] = ( isset( $_REQUEST['status'] ) ) ? $_REQUEST['status'] : 'all' ;
-		if ( isset( $_GET[ self::SUBMISSION_SUCCESS_QV ] ) && $_GET[ self::SUBMISSION_SUCCESS_QV ] ) {
+		$hsd_js_object['status'] = ( isset( $_REQUEST['status'] ) ) ? sanitize_text_field( wp_unslash( $_REQUEST['status'] ) ) : 'all';
+
+		if ( isset( $_GET[ self::SUBMISSION_SUCCESS_QV ] ) && sanitize_text_field( wp_unslash( $_GET[ self::SUBMISSION_SUCCESS_QV ] ) ) ) {
 			$hsd_js_object['refresh_data'] = 1;
 		}
 		return $hsd_js_object;
