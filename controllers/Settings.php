@@ -125,8 +125,7 @@ class HSD_Settings extends HSD_Controller {
 						'label' => __( 'Advanced: Reset', 'help-scout' ),
 						'option' => array(
 							'description' => __( 'To be used if you\'ve recently migrated and have the API error "input could not be validate". Note: confirm the mailbox, APP ID, and Secret before using this option.', 'help-scout' ),
-							'type' => 'bypass',
-							'output' => self::reset_customer_ids(),
+							'type' => 'reset_ids',
 						),
 						'sanitize_callback' => array( __CLASS__, 'sanitize_mailbox_id' ),
 					),

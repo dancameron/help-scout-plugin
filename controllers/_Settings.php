@@ -373,24 +373,11 @@ class SA_Settings_API extends HSD_Controller {
 			<input type="hidden" name="<?php echo esc_attr( $name ); ?>" id="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $data['value'] ); ?>" <?php foreach ( $data['attributes'] as $attr => $attr_value ) { echo esc_attr( $attr ).'="'.esc_attr( $attr_value ).'" '; } ?> />
 		<?php elseif ( $data['type'] == 'file' ) : ?>
 			<input type="file" name="<?php echo esc_attr( $name ); ?>" id="<?php echo esc_attr( $name ); ?>" <?php if ( isset( $data['required'] ) && $data['required'] ) { echo 'required'; } ?>/>
-		<?php elseif ( $data['type'] == 'pages' ) : ?>
-			<?php
-				$defaults = array(
-					'name' => $name,
-					'echo' => 1,
-					'show_option_none' => __( '-- Select --', 'help-scout' ),
-					'option_none_value' => '0',
-					'selected' => $data['default'],
-					);
-				$parsed_args = wp_parse_args( $data['args'], $defaults );
-				wp_dropdown_pages( $parsed_args ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-			?>
-		<?php elseif ( 'bypass' === $data['type'] ) : ?>
-			<?php if ( isset( $data['output'] ) ) { echo $data['output']; } // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+		<?php elseif ( 'reset_ids' === $data['type'] ) : ?>
+			<span class="button" id="reset_customer_ids" data-nonce="<?php wp_create_nonce( HSD_Settings::HSD_NONCE ); ?>"><?php esc_html_e( 'Reset Customer IDS', 'help-scout' ); ?></span>
 		<?php else : ?>
 			<input type="<?php echo esc_attr( $data['type'] ); ?>" name="<?php echo esc_attr( $name ); ?>" id="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $data['default'] ); ?>" placeholder="<?php echo isset( $data['placeholder'] )? esc_html( $data['placeholder'] ):''; ?>" size="<?php echo isset( $data['size'] )? esc_html( $data['size'] ):40; ?>" <?php foreach ( $data['attributes'] as $attr => $attr_value ) { echo esc_attr( $attr ).'="'.esc_attr( $attr_value ).'" '; } ?> <?php if ( isset( $data['required'] ) && $data['required'] ) { echo 'required'; } ?> class="text-input" />
 		<?php endif; ?>
-
 		<?php if ( $data['type'] != 'checkbox' && ! empty( $data['description'] ) ) : ?>
 			<p class="description help_block"><?php echo wp_kses_post( $data['description'] ); ?></p>
 		<?php endif; ?>
