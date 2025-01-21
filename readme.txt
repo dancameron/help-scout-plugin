@@ -42,18 +42,10 @@ Have a look at the [getting started guide](https://wphelpscout.com/support/docs/
 
 Beacon is included on all Free plans, so you can embed your Beacon using this plugin. However, the contact form requires an API key, and API access is only available for paying plans.
 
-
-== Screenshots ==
-
-1. Submission form
-2. Beacon
-
-
-== Upgrade Notice ==
-
-First Release
-
 == Changelog ==
+
+= 6.5.2 =
+* **Fix:** Updates for WordPress coding standards and plugin security
 
 = 6.5.1 =
 * **Fix:** SSL Verify update
