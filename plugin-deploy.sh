@@ -23,7 +23,7 @@ PLUGINVERSION=`grep "Version:" $SRC_DIR/$MAINFILE | awk '{ print $NF}'`
 
 echo ".........................................."
 echo
-echo "Preparing to deploy weForms"
+echo "Preparing to deploy Help Scout"
 echo "(Current version: $PLUGINVERSION)"
 echo
 echo ".........................................."
