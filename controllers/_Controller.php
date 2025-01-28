@@ -287,6 +287,10 @@ abstract class HSD_Controller extends HelpScout_Desk {
 			self::ajax_fail( __( 'Help Scout Login Required Invalid Nonce', 'help-scout' ) );
 		}
 
+		if ( ! current_user_can( 'read' ) ) {
+			self::ajax_fail( __( 'Help Scout Login Invalid User', 'help-scout' ) );
+		}
+
 		if ( ! get_current_user_id() && apply_filters( 'hsd_login_required', true ) ) {
 			if ( ! $redirect && self::using_permalinks() ) {
 				$server_name = isset( $_SERVER['SERVER_NAME'] ) ? esc_url_raw( wp_unslash( $_SERVER['SERVER_NAME'] ) ) : '';
