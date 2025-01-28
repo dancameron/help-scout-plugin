@@ -99,7 +99,12 @@ class HSD_Forms extends HSD_Controller {
 	 */
 	public static function maybe_process_form() {
 		$nonce = isset( $_REQUEST['hsd_nonce'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['hsd_nonce'] ) ) : '';
+
 		if ( ! wp_verify_nonce( $nonce, HSD_Controller::NONCE ) ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'read' ) ) {
 			return;
 		}
 

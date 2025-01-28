@@ -469,6 +469,10 @@ class SA_Settings_API extends HSD_Controller {
 			wp_die( 'Helpscout Security check failed' );
 		}
 
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			return;
+		}
+
 		// Don't save meta boxes when the importer is used.
 		if ( isset( $_GET['import'] ) && $_GET['import'] == 'wordpress' ) {
 			return;
