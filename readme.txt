@@ -3,8 +3,8 @@ Contributors: helpscout, sproutapps, dancameron, elanasparkle, avonville1
 Tags: support, documentation, helpdesk, contact form help desk
 Requires at least: 4.5
 Tested up to: 6.7
-Stable tag: 6.5.1
-Release 6.5.1
+Stable tag: 6.5.3
+Release 6.5.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
