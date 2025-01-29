@@ -3,8 +3,8 @@ Contributors: helpscout, sproutapps, dancameron, elanasparkle, avonville1
 Tags: support, documentation, helpdesk, contact form help desk
 Requires at least: 4.5
 Tested up to: 6.7
-Stable tag: 6.5.3
-Release 6.5.3
+Stable tag: 6.5.4
+Release 6.5.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -54,6 +54,12 @@ Beacon is included on all Free plans, so you can embed your Beacon using this pl
 First Release
 
 == Changelog ==
+
+= 6.5.4 =
+* **Fix:** Fixes issues when posts are saved causing nonce error.
+
+= 6.5.3 =
+* **Fix:** Updates to WordPress coding standards.
 
 = 6.5.1 =
 * **Fix:** SSL Verify update
