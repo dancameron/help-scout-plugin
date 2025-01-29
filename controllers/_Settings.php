@@ -70,9 +70,6 @@ class SA_Settings_API extends HSD_Controller {
 		// add meta boxes
 		add_action( 'add_meta_boxes', array( __CLASS__, 'add_meta_boxes' ) );
 
-		// save meta boxes
-		add_action( 'save_post', array( __CLASS__, 'save_meta_boxes' ), 10, 2 );
-
 		// add submission query vars
 		add_filter( 'query_vars', array( __CLASS__, 'add_query_vars' ) );
 
@@ -450,66 +447,6 @@ class SA_Settings_API extends HSD_Controller {
 		} else {
 			if ( method_exists( $meta_box['args']['show_callback'][0], $meta_box['args']['show_callback'][1] ) ) {
 				do_action( 'si_error', __CLASS__ . '::' . __FUNCTION__ . ' - callback may be private.', $meta_box );
-			}
-		}
-	}
-
-	/**
-	 * Attempt to save all registered meta boxes.
-	 *
-	 * @param  int $post_id
-	 * @param  object $post
-	 * @return
-	 */
-	public static function save_meta_boxes( $post_id, $post ) {
-
-		$nonce = ( isset( $_POST['si_meta_box_nonce'] ) ) ? sanitize_text_field( wp_unslash( $_POST['si_meta_box_nonce'] ) ) : '';
-
-		if ( ! wp_verify_nonce( $nonce, HSD_Settings::HSD_NONCE ) ) {
-			wp_die( 'Helpscout Security check failed' );
-		}
-
-		if ( ! current_user_can( 'edit_post', $post_id ) ) {
-			return;
-		}
-
-		// Don't save meta boxes when the importer is used.
-		if ( isset( $_GET['import'] ) && $_GET['import'] == 'wordpress' ) {
-			return;
-		}
-		if ( isset( $_POST['option_page'] ) ) {
-			return;
-		}
-
-		// don't do anything on autosave, auto-draft, bulk edit, or quick edit
-		if ( wp_is_post_autosave( $post_id ) || $post->post_status == 'auto-draft' || defined( 'DOING_AJAX' ) || isset( $_GET['bulk_edit'] ) ) {
-			return;
-		}
-
-		foreach ( self::$meta_boxes as $post_type => $post_meta_boxes ) {
-			// Only save the meta boxes that count
-			if ( $post->post_type == $post_type ) {
-				// Sort by saved weight
-				uasort( $post_meta_boxes, array( __CLASS__, 'sort_by_save_weight' ) );
-				// Loop through each meta box registered under this type.
-				foreach ( $post_meta_boxes as $box_name => $args ) {
-					if ( isset( $args['save_callback'] ) && is_array( $args['save_callback'] ) ) {
-						if ( is_callable( $args['save_callback'] ) ) {
-							$callback_args = ( ! isset( $args['save_callback_args'] ) ) ? array() : $args['save_callback_args'] ;
-
-							$action_name = implode( '::', $args['save_callback'] );
-							if ( did_action( $action_name ) > 1 ) {
-								return;
-							}
-							// execute
-							call_user_func_array( $args['save_callback'], array( $post_id, $post, $callback_args ) );
-							// action
-							do_action( $action_name, $post_id, $post, $callback_args );
-						} elseif ( method_exists( $args['save_callback'][0], $args['save_callback'][1] ) ) {
-							do_action( 'si_error', __CLASS__ . '::' . __FUNCTION__ . ' - callback may be private.', $args );
-						}
-					}
-				}
 			}
 		}
 	}
