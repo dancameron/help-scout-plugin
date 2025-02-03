@@ -21,15 +21,21 @@ class HSD_Beacon extends HSD_Controller {
 		self::register_settings();
 
 		// front-end view
+		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_scripts' ) );
 		add_action( 'wp_footer', array( __CLASS__, 'add_beacon' ) );
 	}
 
-	private static function embed_code() {
-		$code = str_replace(
-			array( '<script>', '</script>', '<script type="text/javascript">' ),
-			array( '', '', '' ),
-		self::$beacon_embed );
-		wp_add_inline_script( 'hsd', $code );
+	/**
+	 * Enqueue scripts
+	 */
+	public static function enqueue_scripts() {
+		wp_enqueue_script( 'hsd-beacon', HSD_URL . '/resources/front-end/js/hsd-beacon.js', array(), self::HSD_VERSION, true );
+		$pattern = '/window\.Beacon\(\s*[\'"]init[\'"]\s*,\s*[\'"]([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})[\'"]\s*\)/i';
+		
+		if ( self::$beacon_embed && preg_match( $pattern, self::$beacon_embed, $matches ) ) {
+			$code = "window.Beacon('init', '" . $matches[1] . "');";
+			wp_add_inline_script( 'hsd-beacon', $code );
+		}
 	}
 
 	private static function is_beacon_2() {
@@ -60,8 +66,6 @@ class HSD_Beacon extends HSD_Controller {
 			?>
 
 				<script type="text/javascript">
-					<?php self::embed_code(); ?>
-
 					<?php if ( self::is_beacon_2() ) : ?>
 
 						<?php if ( self::$beacon_key ) : ?>
@@ -90,8 +94,6 @@ class HSD_Beacon extends HSD_Controller {
 		} else {
 			?>
 				<script type="text/javascript">
-					<?php self::embed_code(); ?>
-
 					<?php if ( self::is_beacon_2() ) : ?>
 						// nothing yet
 					<?php else : ?>
