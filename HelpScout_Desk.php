@@ -34,7 +34,7 @@ abstract class HelpScout_Desk {
 	/**
 	 * Current version. Should match help-scout-desk.php plugin version.
 	 */
-	const HSD_VERSION = '6.5.4';
+	const HSD_VERSION = '6.5.6';
 	/**
 	 * DB Version
 	 */

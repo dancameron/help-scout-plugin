@@ -29,7 +29,7 @@ class HSD_Beacon extends HSD_Controller {
 	 * Enqueue scripts
 	 */
 	public static function enqueue_scripts() {
-		wp_enqueue_script( 'hsd-beacon', HSD_URL . '/resources/front-end/js/hsd-beacon.js', array(), self::HSD_VERSION, true );
+		wp_enqueue_script( 'hsd-beacon', HSD_URL . '/resources/front-end/js/hsd-beacon.js', array(), self::HSD_VERSION, false );
 		$pattern = '/window\.Beacon\(\s*[\'"]init[\'"]\s*,\s*[\'"]([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})[\'"]\s*\)/i';
 		
 		if ( self::$beacon_embed && preg_match( $pattern, self::$beacon_embed, $matches ) ) {
