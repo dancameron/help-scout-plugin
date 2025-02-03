@@ -1,5 +1,5 @@
 === Help Scout ===
-Contributors: helpscout, sproutapps, dancameron, elanasparkle, avonville1
+Contributors: helpscout, sproutapps, dancameron, elanasparkle, avonville1, jamesros161
 Tags: support, documentation, helpdesk, contact form help desk
 Requires at least: 4.5
 Tested up to: 6.7
